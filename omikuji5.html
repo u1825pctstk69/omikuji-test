@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>本日の運勢ルーレット（画像付き）</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; padding: 40px; }
+    #wheel {
+      margin: 20px auto;
+      width: 280px;
+      height: 280px;
+      border: 10px solid #333;
+      border-radius: 50%;
+      position: relative;
+      overflow: hidden;
+      background: #fff;
+    }
+    .segment {
+      width: 50%;
+      height: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform-origin: 0% 0%;
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      box-sizing: border-box;
+      text-shadow: 1px 1px 2px #333;
+      padding: 2px;
+    }
+    .segment img {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      margin-bottom: 2px;
+      box-shadow: 0 0 3px #0007;
+      background: #fff;
+    }
+    #result {
+      margin-top: 32px;
+      font-size: 1.4em;
+    }
+    #resultImage {
+      width: 120px;
+      margin-top: 14px;
+      display: none;
+    }
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(1440deg); }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 本日の運勢ルーレット 🎯</h1>
+  <div id="wheel"></div>
+  <button id="spinBtn" onclick="spin()">ルーレットを回す！</button>
+  <div id="result"></div>
+  <img id="resultImage" alt="おみくじ画像">
+
+  <script>
+    const fortunes = [
+      { label: "超大吉", color: "#f39c12", message: "奇跡の1日が始まる！", img: "omikuji/chodaikichi.jpg" },
+      { label: "大吉", color: "#2ecc71", message: "今日はとってもラッキー！", img: "omikuji/daikichi.jpg" },
+      { label: "中吉", color: "#3498db", message: "いい日になる予感♪", img: "omikuji/chukichi.jpg" },
+      { label: "吉", color: "#9b59b6", message: "平和な1日を過ごせそう。", img: "omikuji/kichi.jpg" },
+      { label: "小吉", color: "#1abc9c", message: "ちょっと嬉しいことがあるかも！", img: "omikuji/shokichi.jpg" },
+      { label: "末吉", color: "#95a5a6", message: "地味に良い感じ。", img: "omikuji/suekichi.jpg" },
+      { label: "凶", color: "#e74c3c", message: "慎重に動くと◎", img: "omikuji/kyo.jpg" },
+      { label: "大凶", color: "#34495e", message: "今日はネタを拾う日よっ！", img: "omikuji/daikyo.jpg" }
+    ];
+
+    const wheel = document.getElementById("wheel");
+    const result = document.getElementById("result");
+    const resultImage = document.getElementById("resultImage");
+    const spinBtn = document.getElementById("spinBtn");
+    let spinning = false;
+
+    function setupWheel() {
+      wheel.innerHTML = "";
+      const angleStep = 360 / fortunes.length;
+      fortunes.forEach((fortune, i) => {
+        const seg = document.createElement("div");
+        seg.className = "segment";
+        seg.style.background = fortune.color;
+        seg.style.transform = `rotate(${i * angleStep}deg) skewY(-${90 - angleStep}deg)`;
+        seg.innerHTML =
+          `<img src="${fortune.img}" alt="${fortune.label}"><div style="transform: skewY(${90 - angleStep}deg) rotate(${angleStep / 2}deg);">${fortune.label}</div>`;
+        wheel.appendChild(seg);
+      });
+    }
+
+    function spin() {
+      if (spinning) return;
+      const today = new Date().toLocaleDateString();
+      const key = "fortune_spin_img_" + today;
+
+      if (localStorage.getItem(key)) {
+        const stored = JSON.parse(localStorage.getItem(key));
+        showResult(stored);
+        result.innerText = "今日はもう回したでしょ！？また明日来なさいっ💢\n\n" +
+          `${stored.label}：${stored.message}`;
+        return;
+      }
+
+      spinning = true;
+      spinBtn.disabled = true;
+
+      const pickedIndex = Math.floor(Math.random() * fortunes.length);
+      const picked = fortunes[pickedIndex];
+      const angleStep = 360 / fortunes.length;
+      const totalSpin = 360 * 4 + (360 - (pickedIndex * angleStep + angleStep / 2));
+      wheel.style.transition = "transform 4s cubic-bezier(.12,.82,.86,.98)";
+      wheel.style.transform = `rotate(${totalSpin}deg)`;
+
+      setTimeout(() => {
+        showResult(picked);
+        localStorage.setItem(key, JSON.stringify(picked));
+        spinning = false;
+        spinBtn.disabled = true;
+      }, 4000);
+    }
+
+    function showResult(fortune) {
+      result.innerText = `${fortune.label}：${fortune.message}`;
+      resultImage.src = fortune.img;
+      resultImage.style.display = "block";
+    }
+
+    window.onload = function () {
+      setupWheel();
+      const today = new Date().toLocaleDateString();
+      const key = "fortune_spin_img_" + today;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const fortune = JSON.parse(stored);
+        showResult(fortune);
+        spinBtn.disabled = true;
+      }
+    };
+  </script>
+</body>
+</html>
